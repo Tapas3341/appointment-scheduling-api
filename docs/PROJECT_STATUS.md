@@ -34,7 +34,7 @@
 **Primary branch:** `main`  
 **Known initial commit:** `d7c0ab3 chore: initialize appointment scheduling API`  
 **Latest observed commit:** `04b2051 Update status and handoff docs at end of Day 0` (reported by the developer on 22 October 2026).
-**Git state:** Day 1 implementation is not yet committed; the clean/synced state noted above was reported at the end of Day 0.
+**Git state:** Day 1 implementation committed as `ae81008`; remote synchronization has not been checked.
 **Dependency approach:** Python virtual environment (`venv`), `pip`, pinned `requirements.txt`.  
 **Python version observed:** `3.14.4`.  
 **Last manually verified behavior:** PostgreSQL-backed `GET /health` returned `{"status": "ok"}`; registration returned the expected `201`, `409`, and `422` responses; `/docs` returned HTTP 200. Temporary registration test rows were removed.
@@ -117,7 +117,7 @@ M0 completion does not imply that M1 or any later milestone is complete.
 6. [x] Implement and manually verify registration validation, persistence, hashing, and response safety.
 7. [x] Verify `alembic check`, Python compilation, and the database-backed health endpoint.
 8. [x] Add automated tests against a separate PostgreSQL test database; all 9 pass.
-9. [ ] Review and commit the Day 1 work.
+9. [x] Commit the Day 1 work as `ae81008`.
 
 ### Day 1 — 24 October 2026
 
@@ -127,7 +127,7 @@ M0 completion does not imply that M1 or any later milestone is complete.
 
 **Learned / can now explain:** SQLAlchemy models register table descriptions in metadata; Alembic compares metadata with PostgreSQL and applies versioned migrations; FastAPI yield dependencies scope database sessions to requests; Pydantic validates public input/output; Argon2 stores one-way password hashes; PostgreSQL uniqueness is the final protection against concurrent duplicate registrations.
 
-**Blocked by / next action:** Review and commit the verified Day 1 changes. Then continue with Day 2 login/JWT and role-based authorization; do not claim M1 until its complete booking evidence exists.
+**Blocked by / next action:** Continue with Day 2 login/JWT and role-based authorization; do not claim M1 until its complete booking evidence exists.
 
 **Resume impact:** No change; Day 1 registration and database foundation are implemented, but M1 is not complete.
 

@@ -47,7 +47,7 @@ Known setup and evidence:
 - `/docs` returned HTTP 200; Python compilation, `pip check`, and Alembic schema checks succeeded.
 - `.gitignore` exists and `.venv/` was confirmed ignored.
 - Automated tests use FastAPI `TestClient` and a PostgreSQL database derived by appending `_test` to the configured development database name. Fixtures run Alembic migrations there and truncate only that test database. The test database is `appointments_test`.
-- Day 1 work is uncommitted. Do not report a clean worktree or up-to-date remote without checking Git.
+- Day 1 implementation is committed as `ae81008` (`feat: add database-backed user registration`). Remote synchronization has not been checked.
 - The developer reports removing the personal context document from the public repository and pushing the cleanup, but its absence from tracked files still needs explicit confirmation.
 - Login/JWT, role-based authorization, provider/service management, booking, automated tests, CI, Docker, Redis, RQ, and deployment are not yet implemented.
 
@@ -165,4 +165,4 @@ At the beginning of each new session:
 4. Start from the next incomplete task.
 5. Update the status and handoff after the work session.
 
-**Current next task: Review and commit the verified Day 1 work; then begin Day 2 login/JWT and role authorization. M1 remains incomplete.**
+**Current next task: Begin Day 2 login/JWT and role authorization. M1 remains incomplete.**
