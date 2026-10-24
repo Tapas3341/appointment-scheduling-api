@@ -1,7 +1,7 @@
 # AI Handoff — Appointment Scheduling API
 
-**Last updated:** 22 October 2026  
-**Current project day:** Day 0 complete; Day 1 is next  
+**Last updated:** 24 October 2026
+**Current project day:** Day 1 database/model/migration/registration slice verified; Day 2 is next
 **Purpose:** Portable context for a fresh AI session so implementation continues from verified progress instead of repeating setup or assuming unfinished work exists.
 
 ## 1. What I am building
@@ -24,7 +24,7 @@ If details conflict, follow the canonical project plan and the latest explicit d
 
 ## 3. Current verified state
 
-As of 22 October 2026, **Day 0 is complete; the project is pre-M1**.
+As of 24 October 2026, the **Day 1 database/model/migration/registration slice is implemented and manually verified; the project remains pre-M1**.
 
 Public repository: https://github.com/Tapas3341/appointment-scheduling-api
 
@@ -36,28 +36,24 @@ Known setup and evidence:
 
 - Python version observed: `3.14.4`.
 - Dependency approach: `venv` + `pip`, with pinned dependencies in `requirements.txt`.
-- A minimal FastAPI app exists in `app/main.py`.
-- `GET /health` was manually verified to return the expected `{"status": "ok"}` response.
-- FastAPI-generated Swagger UI opened at `/docs`. This is not a custom frontend.
+- Synchronous SQLAlchemy setup in `app/db.py` provides the environment-based database URL, engine, session factory, and request-scoped dependency.
+- `app/models/base.py` defines the declarative base; `app/models/user.py` defines the UUID-backed user with `full_name`, unique email, password hash, constrained role, and timezone-aware timestamps.
+- `alembic/env.py` loads `.env`, imports the user model, and exposes `Base.metadata` to Alembic.
+- The initial migration `39f41bf309ea_create_users_table.py` is applied locally; `alembic current` reports `39f41bf309ea (head)` and `alembic check` reports no new operations.
+- `GET /health` executes `SELECT 1` through its request-scoped session and was verified over HTTP.
+- `POST /api/v1/auth/register` implements customer/provider registration, input validation, email normalization, Argon2 hashing, and `409` handling for the email unique violation.
+- Manual HTTP verification returned `201` for customer/provider, `409` for duplicate email, and `422` for invalid email, short password, and admin role. Responses omit passwords/hashes; PostgreSQL confirmed Argon2 hashes. Temporary test accounts were removed.
+- Nine automated registration/schema/security tests pass against the dedicated local `appointments_test` PostgreSQL database; this includes persistence, response safety, duplicate conflict rollback, and validation cases.
+- `/docs` returned HTTP 200; Python compilation, `pip check`, and Alembic schema checks succeeded.
 - `.gitignore` exists and `.venv/` was confirmed ignored.
-- Initial commit: `d7c0ab3 chore: initialize appointment scheduling API`.
-- The developer reports removing the personal context document from the public repository and pushing the cleanup.
-- The cleanup commit hash and final post-cleanup Git state have not been recorded in this handoff. Verify them before implementation continues.
-- Database integration, SQLAlchemy models, Alembic migrations, registration, automated tests, CI, Docker, Redis, RQ, and deployment are not yet recorded as implemented.
+- Automated tests use FastAPI `TestClient` and a PostgreSQL database derived by appending `_test` to the configured development database name. Fixtures run Alembic migrations there and truncate only that test database. The test database is `appointments_test`.
+- Day 1 work is uncommitted. Do not report a clean worktree or up-to-date remote without checking Git.
+- The developer reports removing the personal context document from the public repository and pushing the cleanup, but its absence from tracked files still needs explicit confirmation.
+- Login/JWT, role-based authorization, provider/service management, booking, automated tests, CI, Docker, Redis, RQ, and deployment are not yet implemented.
 
-Do not infer that an automated test suite exists from the manual `/health` check. Do not assume PostgreSQL or database packages are already installed or configured.
+Do not infer that an automated test suite exists from the manual HTTP checks.
 
-### Immediate first action in the new session
-
-Verify the local repository state before changing code:
-
-- Check `git status --short`.
-- Check `git log -1 --oneline`.
-- Confirm the personal context document is no longer tracked in the public repository.
-- Inspect the current `requirements.txt` and Python version before adding database dependencies.
-- If the cleanup is committed and the working tree is clean, proceed to Day 1. Do not redo Day 0.
-
-If a check fails, resolve that specific issue first rather than restarting the project.
+The personal-context cleanup was reported during Day 0; verify its tracked-file status before any future repository-wide publication check.
 
 ## 4. Frozen design
 
@@ -104,8 +100,8 @@ Refer to the canonical project plan for access roles, response behavior, and the
 ## 6. Execution schedule
 
 - **Day 0 — Complete:** Repository, README, skeleton, health endpoint, dependency setup, initial commit, and public-repository cleanup.
-- **Day 1 — Next:** PostgreSQL setup/connection, initial SQLAlchemy models and database session lifecycle, Alembic setup/migration, registration.
-- **Day 2:** Login/JWT, roles, provider profile, services.
+- **Day 1 — Database/model/migration/registration slice verified:** PostgreSQL connection, SQLAlchemy session lifecycle, UUID user model, applied Alembic migration, database-backed health check, and manually verified registration.
+- **Day 2 — Next:** Login/JWT, role-based authorization, provider profile, and services.
 - **Day 3:** Exclusion constraint and basic booking; M1 evidence review.
 - **Day 4:** Availability rules and slot generation.
 - **Day 5:** Confirm/cancel/list/admin endpoints and ownership rules.
@@ -133,25 +129,20 @@ Act as a **backend engineering tutor and reviewer, not a code vending machine**.
 - At the end of a work session, provide a short technical recap, a Git commit suggestion, and the status-log entry.
 - Applications/job search continue alongside project work. Do not make the project a reason to postpone applications.
 
-## 8. Day 1 learning and implementation approach
+## 8. Day 1 implementation evidence and next learning step
 
-Day 1 should introduce the database layer incrementally rather than generate the whole backend at once.
+The Day 1 database and registration slice is implemented and manually verified, but has no automated tests yet. The implementation used these concepts:
 
-Suggested sequence:
-
-1. Verify the repository and inspect the current environment/dependencies.
-2. Decide how PostgreSQL will run locally and verify that the service is reachable.
-3. Understand what SQLAlchemy's engine, session, ORM model, and transaction each do.
-4. Configure the synchronous SQLAlchemy 2.0 connection using psycopg3.
-5. Create the initial user model and understand its columns, constraints, and types.
-6. Configure Alembic and create/apply the initial migration.
-7. Implement registration with request validation and password hashing.
-8. Exercise success and failure cases, then add focused automated tests as appropriate.
-9. Commit the working result and update `PROJECT_STATUS.md`.
+- SQLAlchemy's engine manages connections; request-scoped sessions manage each unit of database work.
+- Importing mapped models registers tables in `Base.metadata`, which Alembic compares with PostgreSQL.
+- Alembic migrations version schema changes; the initial UUID user migration is applied locally.
+- FastAPI dependencies provide and close sessions around request handling.
+- Pydantic schemas validate registration input and restrict public roles to customer/provider.
+- Argon2 hashes passwords; a unique-index violation is mapped to `409`, while other database integrity errors are re-raised.
 
 Do not assume Python 3.14.4 is compatible with every dependency. Check actual installation results and relevant package compatibility before proceeding. If a compatibility issue appears, investigate the smallest appropriate fix rather than changing the whole stack by default.
 
-Keep the first day's scope focused: database setup, an initial migration, and registration. Do not pull Day 2 authentication/authorization features forward without a concrete reason.
+Next, add automated tests for the completed Day 1 behavior and commit the current work. Then begin Day 2 login/JWT and role-based authorization.
 
 ## 9. Truthfulness and resume constraints
 
@@ -174,4 +165,4 @@ At the beginning of each new session:
 4. Start from the next incomplete task.
 5. Update the status and handoff after the work session.
 
-**Current next task: Verify the post-cleanup Git state, then begin Day 1.**
+**Current next task: Review and commit the verified Day 1 work; then begin Day 2 login/JWT and role authorization. M1 remains incomplete.**

@@ -1,7 +1,7 @@
 # Appointment Scheduling API — Project Status
 
-**Last updated:** 22 October 2026  
-**Current state:** Day 0 complete / pre-M1  
+**Last updated:** 24 October 2026
+**Current state:** Day 1 database/model/migration/registration slice verified / pre-M1
 **Canonical specification:** `APPOINTMENT_SCHEDULING_API_PROJECT_PLAN.md`  
 **Continuity context:** `APPOINTMENT_SCHEDULING_API_CONTEXT.md`  
 **Resume gates:** `project_resume_milestones.md`
@@ -14,23 +14,31 @@
 - [x] README created to introduce the project and distinguish current implementation from planned scope.
 - [x] Local Python environment and dependency approach selected.
 - [x] Minimal FastAPI application created and starts locally.
-- [x] `GET /health` manually verified successfully.
+- [x] `GET /health` verifies PostgreSQL through a request-scoped SQLAlchemy session.
+- [x] PostgreSQL configured; SQLAlchemy engine and request-scoped session dependency implemented.
+- [x] UUID-backed `User` model and initial Alembic migration applied to the local database.
+- [x] Alembic reports no schema drift after applying the initial migration.
+- [x] Customer/provider registration implemented with input validation and Argon2 password hashing.
+- [x] Registration manually verified over HTTP for success, duplicate email, invalid email, short password, and rejected admin role.
+- [x] Registration responses omit both password and password hash; PostgreSQL verification confirmed Argon2 hashes.
 - [x] First commit created and pushed.
 - [x] `.gitignore` added; `.venv/` confirmed ignored.
 - [x] Personal context document removed from the public repository and the cleanup pushed, as reported by the developer.
 - [x] At least one concrete job-search action completed alongside project work.
-- [ ] Final post-cleanup Git status and latest commit hash reverified in the next session.
+- [x] Latest commit and clean/synced Git state verified from terminal output on 22 October 2026.
+- [ ] Confirm the private personal-context document is absent from tracked public-repository files (for example, with `git ls-files`).
 - [ ] No project milestone has been claimed on the resume.
 
 **Repository URL:** https://github.com/Tapas3341/appointment-scheduling-api  
 **Local repository:** `C:\Users\Tapasendra Patra\appointment-scheduling-api`  
 **Primary branch:** `main`  
 **Known initial commit:** `d7c0ab3 chore: initialize appointment scheduling API`  
-**Latest cleanup commit:** Pushed, but its hash has not been recorded here; verify with `git log -1 --oneline`.  
+**Latest observed commit:** `04b2051 Update status and handoff docs at end of Day 0` (reported by the developer on 22 October 2026).
+**Git state:** Day 1 implementation is not yet committed; the clean/synced state noted above was reported at the end of Day 0.
 **Dependency approach:** Python virtual environment (`venv`), `pip`, pinned `requirements.txt`.  
 **Python version observed:** `3.14.4`.  
-**Last manually verified behavior:** `GET /health` returned the expected healthy response; FastAPI's generated `/docs` Swagger UI opened.  
-**Automated test suite:** Not implemented or recorded yet.  
+**Last manually verified behavior:** PostgreSQL-backed `GET /health` returned `{"status": "ok"}`; registration returned the expected `201`, `409`, and `422` responses; `/docs` returned HTTP 200. Temporary registration test rows were removed.
+**Automated test suite:** 9 registration/schema/security/API tests pass against the dedicated local `appointments_test` PostgreSQL database.
 **Last known CI result:** Not configured / no result recorded.  
 **Deployment URL:** Not applicable yet.
 
@@ -47,11 +55,11 @@ The initial project structure included:
 - `app/main.py`
 - `docs/`
 
-The dependency file contains pinned versions for the initial FastAPI application. Database packages and the database layer have not yet been implemented.
+At the end of Day 0, the dependency file contained pinned versions for the initial FastAPI application. Day 1 database dependencies and implementation are recorded below.
 
 The `/docs` route is FastAPI-generated Swagger UI. It is not a custom frontend.
 
-**Before Day 1 implementation:** verify the latest repository commit, clean working tree, and that the removed personal context file is no longer tracked in the public repository.
+The personal-context cleanup was reported during Day 0; verify its tracked-file status before any future repository-wide publication check.
 
 ## 2. Canonical decisions — do not silently drift
 
@@ -99,17 +107,29 @@ M0 completion does not imply that M1 or any later milestone is complete.
 - [x] Remove the personal context document from the public repository and push the cleanup, as reported.
 - [x] Complete at least one job-search action alongside project work.
 
-### First actions: Day 1
+### Day 1 implementation checklist
 
-1. Verify `git status --short`, `git log -1 --oneline`, and that personal context material is not tracked in the public repository.
-2. Review the installed Python version and current pinned dependencies. Check compatibility before adding database packages; do not assume Python 3.14 compatibility for every dependency.
-3. Set up PostgreSQL for local development and verify the connection.
-4. Add the SQLAlchemy 2.0 synchronous database configuration using psycopg3.
-5. Learn and implement the initial user model and database session lifecycle.
-6. Set up Alembic and generate/apply the first migration.
-7. Implement registration with appropriate request validation and password hashing.
-8. Verify the behavior with focused manual/API checks; introduce automated tests only as actually implemented.
-9. Commit the working Day 1 changes and update this status ledger.
+1. [x] Review Python version and pinned dependencies; install and verify the database/authentication dependencies.
+2. [x] Set up PostgreSQL for local development and verify the connection.
+3. [x] Add synchronous SQLAlchemy engine, session factory, and request-scoped session dependency.
+4. [x] Define the UUID-backed user model and configure Alembic metadata.
+5. [x] Generate and apply the initial migration; verify the PostgreSQL schema.
+6. [x] Implement and manually verify registration validation, persistence, hashing, and response safety.
+7. [x] Verify `alembic check`, Python compilation, and the database-backed health endpoint.
+8. [x] Add automated tests against a separate PostgreSQL test database; all 9 pass.
+9. [ ] Review and commit the Day 1 work.
+
+### Day 1 — 24 October 2026
+
+**Completed:** Configured synchronous SQLAlchemy and a request-scoped session dependency; added a UUID-based `User` model with required `full_name`; configured Alembic to load `DATABASE_URL` and model metadata; replaced the local, unapplied integer-ID migration and applied the corrected initial migration; made `/health` query PostgreSQL; implemented customer/provider registration with normalized email, validation, Argon2 hashing, and duplicate-email conflict handling.
+
+**Evidence:** `alembic current` reports `39f41bf309ea (head)`; `alembic check` reports no new upgrade operations; PostgreSQL `\d users` confirmed the UUID ID, required fields, unique email index, role check constraint, and timezone-aware timestamps. Manual HTTP checks returned `201` for customer/provider registration, `409` for duplicate email, and `422` for invalid email, short password, and admin role. Responses contained no password/hash; PostgreSQL confirmed Argon2 hashes and temporary manual-check users were removed. `/health` returned `{"status": "ok"}`; `/docs` returned HTTP 200. Nine automated tests pass against the separate `appointments_test` database, covering schema validation/normalization, password hashing, customer/provider registration, safe responses, persistence, duplicate rollback, and admin rejection. `python -m compileall -q app`, `pip check`, and Alembic schema checks passed. `.env` is ignored and not tracked.
+
+**Learned / can now explain:** SQLAlchemy models register table descriptions in metadata; Alembic compares metadata with PostgreSQL and applies versioned migrations; FastAPI yield dependencies scope database sessions to requests; Pydantic validates public input/output; Argon2 stores one-way password hashes; PostgreSQL uniqueness is the final protection against concurrent duplicate registrations.
+
+**Blocked by / next action:** Review and commit the verified Day 1 changes. Then continue with Day 2 login/JWT and role-based authorization; do not claim M1 until its complete booking evidence exists.
+
+**Resume impact:** No change; Day 1 registration and database foundation are implemented, but M1 is not complete.
 
 ### Planned implementation sequence
 
@@ -141,11 +161,11 @@ Append one entry after every work session. Keep it short and factual.
 
 **Completed:** Created the public repository and initial project skeleton; implemented a minimal FastAPI app and `/health`; opened generated Swagger UI; selected `venv` + `pip` with pinned dependencies; added `.gitignore`; created and pushed the initial commit; removed the personal context document from the public repository and pushed the cleanup; completed job-search activity and DSA practice.
 
-**Evidence:** Repository: https://github.com/Tapas3341/appointment-scheduling-api. Known initial commit: `d7c0ab3`. `/health` was manually verified. The latest cleanup commit hash must be checked in the next session. No automated test suite, CI, database layer, or deployment is recorded yet.
+**Evidence:** Repository: https://github.com/Tapas3341/appointment-scheduling-api. Initial commit: `d7c0ab3`. Latest observed commit: `04b2051 Update status and handoff docs at end of Day 0`. Terminal output confirmed branch `main` is up to date with `origin/main` and the working tree is clean. `/health` was manually verified. The developer reported removing the personal context document and pushing the cleanup; absence from tracked files still needs explicit confirmation. No automated test suite, CI, database layer, or deployment is recorded yet.
 
 **Learned / can now explain:** Basic FastAPI application setup, the health endpoint, generated Swagger UI, local Python environment/dependency setup, Git commits, and keeping personal context out of a public repository.
 
-**Blocked by / next action:** Verify final Git state, then begin Day 1 with PostgreSQL, SQLAlchemy, Alembic, and registration.
+**Blocked by / next action:** Confirm the private personal-context document is not tracked in the public repository, then begin Day 1 with PostgreSQL, SQLAlchemy, Alembic, and registration.
 
 **Resume impact:** No change; M0 foundation only. Do not claim backend database, authentication, automated testing, CI, caching, background jobs, or deployment features yet.
 
