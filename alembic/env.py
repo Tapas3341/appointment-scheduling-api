@@ -7,8 +7,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from app.models.base import Base
-from app.models.user import User
+from app.models import Base
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 

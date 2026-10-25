@@ -1,9 +1,9 @@
 # Appointment Scheduling API — Project Status
 
 **Last updated:** 25 October 2026
-**Current state:** Day 1 database/model/migration/registration slice verified / pre-M1
-**Canonical specification:** `APPOINTMENT_SCHEDULING_API_PROJECT_PLAN.md`  
-**Continuity context:** `APPOINTMENT_SCHEDULING_API_CONTEXT.md`  
+**Current state:** Day 2 provider profile and service endpoints verified; Day 2 review pending / pre-M1
+**Canonical specification:** `docs/APPOINTMENT_SCHEDULING_API_PROJECT_PLAN (2).md`
+**Continuity context:** `APPOINTMENT_SCHEDULING_API_CONTEXT.md`
 **Resume gates:** `project_resume_milestones.md`
 
 > This is the live execution ledger. Record evidence, not intentions. A planned feature is not a completed feature, and a manually verified endpoint is not an automated test.
@@ -19,6 +19,10 @@
 - [x] UUID-backed `User` model and initial Alembic migration applied to the local database.
 - [x] Alembic reports no schema drift after applying the initial migration.
 - [x] Customer/provider registration implemented with input validation and Argon2 password hashing.
+- [x] JWT login, token validation, current-user lookup, and reusable role authorization implemented.
+- [x] Provider profile and service models added with ownership foreign keys and database constraints.
+- [x] Initial and corrective provider/service migrations applied to the development database; Alembic reports no schema drift.
+- [x] Provider profile update, service creation, and active service listing implemented with role, authentication, validation, and ownership tests.
 - [x] Registration manually verified over HTTP for success, duplicate email, invalid email, short password, and rejected admin role.
 - [x] Registration responses omit both password and password hash; PostgreSQL verification confirmed Argon2 hashes.
 - [x] First commit created and pushed.
@@ -33,12 +37,12 @@
 **Local repository:** `C:\Users\Tapasendra Patra\appointment-scheduling-api`  
 **Primary branch:** `main`  
 **Known initial commit:** `d7c0ab3 chore: initialize appointment scheduling API`  
-**Latest observed pushed checkpoint:** Day 1 implementation and status documentation are on `origin/main`; check Git for the latest commit and current worktree state.
-**Git state:** Day 1 commits are on `origin/main`; verify current status before continuing.
+**Latest verified checkpoint:** Day 2 authentication/provider setup, migrations, and 41 passing tests.
+**Git state:** `main`; verify `git status` and `git log` before continuing.
 **Dependency approach:** Python virtual environment (`venv`), `pip`, pinned `requirements.txt`.  
 **Python version observed:** `3.14.4`.  
 **Last manually verified behavior:** PostgreSQL-backed `GET /health` returned `{"status": "ok"}`; registration returned the expected `201`, `409`, and `422` responses; `/docs` returned HTTP 200. Temporary registration test rows were removed.
-**Automated test suite:** 9 registration/schema/security/API tests pass against the dedicated local `appointments_test` PostgreSQL database.
+**Automated test suite:** 41 registration, authentication, current-user, role, provider-profile, and service tests pass against the dedicated local `appointments_test` PostgreSQL database.
 **Last known CI result:** Not configured / no result recorded.  
 **Deployment URL:** Not applicable yet.
 
@@ -127,9 +131,21 @@ M0 completion does not imply that M1 or any later milestone is complete.
 
 **Learned / can now explain:** SQLAlchemy models register table descriptions in metadata; Alembic compares metadata with PostgreSQL and applies versioned migrations; FastAPI yield dependencies scope database sessions to requests; Pydantic validates public input/output; Argon2 stores one-way password hashes; PostgreSQL uniqueness is the final protection against concurrent duplicate registrations.
 
-**Blocked by / next action:** Continue with Day 2 login/JWT and role-based authorization; do not claim M1 until its complete booking evidence exists.
+**Blocked by / next action:** Implement provider profile and service endpoints; do not claim M1 until its complete booking evidence exists.
 
 **Resume impact:** No change; Day 1 registration and database foundation are implemented, but M1 is not complete.
+
+### Day 2 — 25 October 2026 — Complete
+
+**Completed:** Implemented JWT login, bearer-token validation, current-user lookup, `GET /users/me`, and reusable role authorization. Added the canonical `ProviderProfile` and `Service` schema: `provider_profiles.user_id` is the profile primary/foreign key; profiles have `display_name` and IANA timezone; services reference `provider_id` and include `is_active`, with positive-duration and cascading-delete constraints. Implemented provider-only `PUT /providers/me/profile` with IANA timezone validation, safe responses, and identity-derived upsert behavior; provider-only service creation; and authenticated active-service listing.
+
+**Evidence:** Migration `4c1e7e3415cb` was inspected and applied, then corrective migration `9d7b1a6c4e20` aligned the schema with the canonical plan. `alembic current` reports `9d7b1a6c4e20 (head)` and `alembic check` reports no new operations. PostgreSQL inspection confirmed `provider_profiles.user_id` is the primary key, `services.provider_id` references it, and the duration check and active default exist. The focused provider suite passes: 20 tests; the full suite passes: 41 tests, both against dedicated `appointments_test`. Tests cover current-user and role authorization, profile create/update and ownership, service role checks, missing profile handling, validation, authenticated listing for all roles, provider scoping, active-only filtering, and empty results for an unknown provider. `git diff --check` passes.
+
+**Learned / can now explain:** JWT verification is distinct from identity lookup; identity is resolved from `sub` and checked against the database; a shared primary/foreign key models profile ownership directly; database constraints enforce positive service durations and cascading deletes.
+
+**Blocked by / next action:** Begin Day 3 with the canonical plan's PostgreSQL range/exclusion-constraint experiment, then model/migrate appointments and implement the basic hold flow. Verify overlap rejection and adjacent-slot success before claiming M1.
+
+**Resume impact:** No change; M1 is not complete.
 
 ### Planned implementation sequence
 

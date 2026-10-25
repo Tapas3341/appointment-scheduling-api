@@ -55,10 +55,10 @@ def db_engine(test_database_url: URL):
 @pytest.fixture
 def clean_test_database(db_engine) -> Iterator[None]:
     with db_engine.begin() as connection:
-        connection.execute(text("TRUNCATE TABLE users"))
+        connection.execute(text("TRUNCATE TABLE services, provider_profiles, users"))
     yield
     with db_engine.begin() as connection:
-        connection.execute(text("TRUNCATE TABLE users"))
+        connection.execute(text("TRUNCATE TABLE services, provider_profiles, users"))
 
 
 @pytest.fixture

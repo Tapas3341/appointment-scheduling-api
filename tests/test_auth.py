@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from app.models.user import User
 from app.schemas.auth import UserRegistration
-from app.security import hash_password, password_hash
+from app.security import decode_access_token, hash_password, password_hash
 
 
 def test_registration_schema_trims_name_and_normalizes_email() -> None:
@@ -115,3 +115,63 @@ def test_registration_rejects_admin_role(client) -> None:
     )
 
     assert response.status_code == 422
+
+
+def test_login_returns_bearer_token_without_password_fields(client) -> None:
+    password = "login-password"
+    registration = client.post(
+        "/api/v1/auth/register",
+        json={
+            "full_name": "Login User",
+            "email": "login@example.com",
+            "password": password,
+            "role": "customer",
+        },
+    )
+    assert registration.status_code == 201
+
+    response = client.post(
+        "/api/v1/auth/login",
+        data={"username": " LOGIN@EXAMPLE.COM ", "password": password},
+    )
+
+    assert response.status_code == 200
+    response_body = response.json()
+    assert set(response_body) == {"access_token", "token_type"}
+    assert response_body["token_type"] == "bearer"
+    assert password not in response.text
+    assert "password_hash" not in response.text
+    assert decode_access_token(response_body["access_token"])["sub"] == registration.json()["id"]
+
+
+@pytest.mark.parametrize(
+    ("username", "password"),
+    [
+        ("login@example.com", "incorrect-password"),
+        ("unknown@example.com", "login-password"),
+    ],
+)
+def test_login_rejects_invalid_credentials_generically(
+    client,
+    username: str,
+    password: str,
+) -> None:
+    registration = client.post(
+        "/api/v1/auth/register",
+        json={
+            "full_name": "Login User",
+            "email": "login@example.com",
+            "password": "login-password",
+            "role": "customer",
+        },
+    )
+    assert registration.status_code == 201
+
+    response = client.post(
+        "/api/v1/auth/login",
+        data={"username": username, "password": password},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Incorrect email or password."
+    assert response.headers["www-authenticate"] == "Bearer"

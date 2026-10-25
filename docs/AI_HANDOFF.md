@@ -1,7 +1,7 @@
 # AI Handoff — Appointment Scheduling API
 
 **Last updated:** 25 October 2026
-**Current project day:** Day 1 database/model/migration/registration slice verified; Day 2 is next
+**Current project day:** Day 2 provider profile and service endpoints verified; Day 2 review remains
 **Purpose:** Portable context for a fresh AI session so implementation continues from verified progress instead of repeating setup or assuming unfinished work exists.
 
 ## 1. What I am building
@@ -14,17 +14,17 @@ The project is intentionally small. Do not add a frontend, real payments, real e
 
 ## 2. Read these documents first
 
-1. `PROJECT_STATUS.md` — live progress ledger, evidence, and next actions.
-2. `APPOINTMENT_SCHEDULING_API_PROJECT_PLAN.md` — canonical specification, endpoint contract, schema, rules, and day-by-day plan.
+1. `docs/PROJECT_STATUS.md` — live progress ledger, evidence, and next actions.
+2. `docs/APPOINTMENT_SCHEDULING_API_PROJECT_PLAN (2).md` — canonical specification, endpoint contract, schema, rules, and day-by-day plan.
 3. `project_resume_milestones.md` — gates for what may truthfully appear on the resume.
 4. `APPOINTMENT_SCHEDULING_API_CONTEXT.md` — fuller motivation, learning goals, and interview framing. Keep this private; do not put it in the public repository.
-5. `DECISIONS.md` — create only when the first consequential implementation decision needs to be recorded; do not invent prior decisions.
+5. `DECISIONS.md` — implementation decisions and trade-offs.
 
 If details conflict, follow the canonical project plan and the latest explicit decision record. The actual repository/code and tests establish what has been implemented. `PROJECT_STATUS.md` should reflect that evidence.
 
 ## 3. Current verified state
 
-As of 24 October 2026, the **Day 1 database/model/migration/registration slice is implemented and manually verified; the project remains pre-M1**.
+As of 25 October 2026, **Day 2 is complete: registration, login/JWT, protected current-user lookup, role authorization, canonical provider/service models, and all three provider/service endpoints are implemented; the project remains pre-M1**.
 
 Public repository: https://github.com/Tapas3341/appointment-scheduling-api
 
@@ -38,18 +38,23 @@ Known setup and evidence:
 - Dependency approach: `venv` + `pip`, with pinned dependencies in `requirements.txt`.
 - Synchronous SQLAlchemy setup in `app/db.py` provides the environment-based database URL, engine, session factory, and request-scoped dependency.
 - `app/models/base.py` defines the declarative base; `app/models/user.py` defines the UUID-backed user with `full_name`, unique email, password hash, constrained role, and timezone-aware timestamps.
-- `alembic/env.py` loads `.env`, imports the user model, and exposes `Base.metadata` to Alembic.
-- The initial migration `39f41bf309ea_create_users_table.py` is applied locally; `alembic current` reports `39f41bf309ea (head)` and `alembic check` reports no new operations.
+- `alembic/env.py` loads `.env`, imports all models, and exposes `Base.metadata` to Alembic.
+- The initial migration `39f41bf309ea_create_users_table.py`, initial provider/service migration `4c1e7e3415cb`, and corrective canonical-schema migration `9d7b1a6c4e20` are applied locally; `alembic current` reports `9d7b1a6c4e20 (head)` and `alembic check` reports no new operations.
 - `GET /health` executes `SELECT 1` through its request-scoped session and was verified over HTTP.
 - `POST /api/v1/auth/register` implements customer/provider registration, input validation, email normalization, Argon2 hashing, and `409` handling for the email unique violation.
+- `POST /api/v1/auth/login` issues bearer JWTs; `get_current_user` verifies tokens and loads the active user, `GET /api/v1/users/me` returns safe profile fields, and `require_role` provides role checks.
+- `ProviderProfile.user_id` is the profile primary key and FK to `users.id`; its required fields include `display_name` and IANA timezone. `Service.provider_id` references that key; services include `name`, positive `duration_minutes`, and `is_active`. Cascading deletes and the duration check are enforced in PostgreSQL. See `DECISIONS.md` for implementation choices.
+- `PUT /api/v1/providers/me/profile` is provider-only, validates IANA timezones, derives identity from the authenticated user, and creates or updates only that user's profile.
+- `POST /api/v1/providers/me/services` is provider-only, requires an existing profile, validates service name and positive duration, and sets `provider_id` from the authenticated user's ID. `GET /api/v1/providers/{id}/services` requires authentication and returns only active services for that provider; unknown provider IDs return an empty list.
 - Manual HTTP verification returned `201` for customer/provider, `409` for duplicate email, and `422` for invalid email, short password, and admin role. Responses omit passwords/hashes; PostgreSQL confirmed Argon2 hashes. Temporary test accounts were removed.
-- Nine automated registration/schema/security tests passed against the dedicated local `appointments_test` PostgreSQL database; this includes persistence, response safety, duplicate conflict rollback, and validation cases.
+- Twenty focused provider tests and 41 total tests pass against the dedicated local `appointments_test` PostgreSQL database. The focused and full runs were performed sequentially because both use and truncate the same test database.
+- `alembic check` reports no new operations; `git diff --check` passes.
 - `/docs` returned HTTP 200; Python compilation, `pip check`, and Alembic schema checks succeeded.
 - `.gitignore` exists and `.venv/` was confirmed ignored.
 - Automated tests use FastAPI `TestClient` and a PostgreSQL database derived by appending `_test` to the configured development database name. The database must exist first; fixtures run Alembic migrations there and truncate only that test database. The test database is `appointments_test`. Never run these fixtures against a database with data you need.
 - Day 1 implementation is committed and pushed: `ae81008` (`feat: add database-backed user registration`) and `08a3e76` (`docs: record Day 1 registration checkpoint`). README and handoff documentation were refreshed for Day 2 on 25 October 2026; check Git status and latest commit before continuing.
 - A tracked-file search found no context-named file in the public repository. Keep any private personal context out of the public repo.
-- Login/JWT, role-based authorization, provider/service management, booking, broader integration/concurrency tests, CI, Docker, Redis, RQ, and deployment are not yet implemented.
+- Availability, slot generation, appointment booking/lifecycle, broader concurrency tests, CI, Docker, Redis, RQ, and deployment are not yet implemented.
 
 ## 4. Frozen design
 
@@ -97,8 +102,8 @@ Refer to the canonical project plan for access roles, response behavior, and the
 
 - **Day 0 — Complete:** Repository, README, skeleton, health endpoint, dependency setup, initial commit, and public-repository cleanup.
 - **Day 1 — Database/model/migration/registration slice verified:** PostgreSQL connection, SQLAlchemy session lifecycle, UUID user model, applied Alembic migration, database-backed health check, and manually verified registration.
-- **Day 2 — Next:** Login/JWT, role-based authorization, provider profile, and services.
-- **Day 3:** Exclusion constraint and basic booking; M1 evidence review.
+- **Day 2 — Complete:** Authentication, canonical provider/service schema, profile and service endpoints, and 41 automated tests are verified.
+- **Day 3 — Next:** Experiment with PostgreSQL ranges/exclusion constraints, add appointment schema and migration, implement basic holds, and verify overlap rejection plus adjacent-slot success.
 - **Day 4:** Availability rules and slot generation.
 - **Day 5:** Confirm/cancel/list/admin endpoints and ownership rules.
 - **Day 6:** Integration and concurrency tests.
@@ -125,20 +130,13 @@ Act as a **backend engineering tutor and reviewer, not a code vending machine**.
 - At the end of a work session, provide a short technical recap, a Git commit suggestion, and the status-log entry.
 - Applications/job search continue alongside project work. Do not make the project a reason to postpone applications.
 
-## 8. Day 1 implementation evidence and next learning step
+## 8. Day 2 completion and Day 3 starting point
 
-The Day 1 database and registration slice is implemented, manually verified, and covered by nine automated tests. The implementation used these concepts:
+Day 2 acceptance criteria are met for login/token validation, current-user lookup, role authorization, provider profiles, and services. The full suite has 41 passing tests against `appointments_test`; the provider-specific suite has 20. The current migration head is `9d7b1a6c4e20`.
 
-- SQLAlchemy's engine manages connections; request-scoped sessions manage each unit of database work.
-- Importing mapped models registers tables in `Base.metadata`, which Alembic compares with PostgreSQL.
-- Alembic migrations version schema changes; the initial UUID user migration is applied locally.
-- FastAPI dependencies provide and close sessions around request handling.
-- Pydantic schemas validate registration input and restrict public roles to customer/provider.
-- Argon2 hashes passwords; a unique-index violation is mapped to `409`, while other database integrity errors are re-raised.
+Start Day 3 from the canonical plan's “Day 3 — Core scheduling and Milestone 1” section. First experiment with PostgreSQL range overlap and adjacent half-open ranges; then add `appointments` with the partial exclusion constraint for active statuses and implement the basic five-minute hold. Keep `appointments_test` separate from development. Do not claim M1 until the overlap/adjacency behavior and cancellation/expiry evidence in the plan are verified.
 
-Do not assume Python 3.14.4 is compatible with every dependency. Check actual installation results and relevant package compatibility before proceeding. If a compatibility issue appears, investigate the smallest appropriate fix rather than changing the whole stack by default.
-
-Day 1 is complete. Begin Day 2 with login/JWT and role-based authorization, following the canonical plan; keep M1 marked incomplete until its booking evidence is met.
+The Day 2 ownership pattern to reuse is: validate the bearer token, load `current_user`, authorize by role, and derive owner IDs from that user rather than client-supplied identity.
 
 ## 9. Truthfulness and resume constraints
 
@@ -161,4 +159,4 @@ At the beginning of each new session:
 4. Start from the next incomplete task.
 5. Update the status and handoff after the work session.
 
-**Current next task: Begin Day 2 login/JWT and role authorization. M1 remains incomplete.**
+**Current next task: Begin Day 3 with PostgreSQL range/exclusion-constraint exploration and appointment schema design. M1 remains incomplete.**

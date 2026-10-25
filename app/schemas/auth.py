@@ -34,3 +34,8 @@ class UserRegistrationResponse(BaseModel):
     email: EmailStr
     role: Literal["customer", "provider", "admin"]
     created_at: datetime
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: Literal["bearer"]

@@ -23,9 +23,9 @@ Technologies will be added to the implemented stack only after they have actuall
 
 ## Current Status
 
-**Day 1 database and registration slice complete; Day 2 is next.**
+**Day 2 authentication and provider/service setup complete; Day 3 booking work is next.** The project remains pre-M1 until the booking integrity criteria are verified.
 
-The API currently connects to PostgreSQL, checks database connectivity through `GET /health`, and supports customer/provider registration. Login/JWT, authorization, provider services, and appointment booking remain planned.
+The API connects to PostgreSQL, checks database connectivity through `GET /health`, supports customer/provider registration and JWT login, identifies the authenticated user, and supports provider profile and service management. Availability and appointment booking remain planned.
 
 ## Implemented
 
@@ -33,12 +33,15 @@ The API currently connects to PostgreSQL, checks database connectivity through `
 - UUID-backed user model and Alembic migration.
 - `GET /health`, including a PostgreSQL connectivity check.
 - `POST /api/v1/auth/register` with input validation, Argon2 password hashing, duplicate-email conflict handling, and a response that excludes password data.
-- Nine automated registration tests against a separate PostgreSQL test database.
+- `POST /api/v1/auth/login`, bearer-token validation, `GET /api/v1/users/me`, and reusable role authorization.
+- `PUT /api/v1/providers/me/profile` with IANA timezone validation and authenticated ownership.
+- `POST /api/v1/providers/me/services` and authenticated `GET /api/v1/providers/{id}/services` listing active services only.
+- PostgreSQL provider/service schema with migrations, positive service-duration constraint, and cascading ownership.
+- 41 automated tests against a separate PostgreSQL test database.
 
 ## Planned
 
-- Login, JWT authentication, and role-based authorization for customers, providers, and administrators.
-- Provider profiles, services, and weekly availability rules.
+- Weekly availability rules and slot generation.
 - Appointment booking with five-minute temporary holds.
 - PostgreSQL constraints to prevent overlapping active appointments.
 - Timezone-aware scheduling and booking lifecycle rules.
