@@ -1,6 +1,6 @@
 # AI Handoff — Appointment Scheduling API
 
-**Last updated:** 24 October 2026
+**Last updated:** 25 October 2026
 **Current project day:** Day 1 database/model/migration/registration slice verified; Day 2 is next
 **Purpose:** Portable context for a fresh AI session so implementation continues from verified progress instead of repeating setup or assuming unfinished work exists.
 
@@ -43,17 +43,13 @@ Known setup and evidence:
 - `GET /health` executes `SELECT 1` through its request-scoped session and was verified over HTTP.
 - `POST /api/v1/auth/register` implements customer/provider registration, input validation, email normalization, Argon2 hashing, and `409` handling for the email unique violation.
 - Manual HTTP verification returned `201` for customer/provider, `409` for duplicate email, and `422` for invalid email, short password, and admin role. Responses omit passwords/hashes; PostgreSQL confirmed Argon2 hashes. Temporary test accounts were removed.
-- Nine automated registration/schema/security tests pass against the dedicated local `appointments_test` PostgreSQL database; this includes persistence, response safety, duplicate conflict rollback, and validation cases.
+- Nine automated registration/schema/security tests passed against the dedicated local `appointments_test` PostgreSQL database; this includes persistence, response safety, duplicate conflict rollback, and validation cases.
 - `/docs` returned HTTP 200; Python compilation, `pip check`, and Alembic schema checks succeeded.
 - `.gitignore` exists and `.venv/` was confirmed ignored.
-- Automated tests use FastAPI `TestClient` and a PostgreSQL database derived by appending `_test` to the configured development database name. Fixtures run Alembic migrations there and truncate only that test database. The test database is `appointments_test`.
-- Day 1 implementation is committed as `ae81008` (`feat: add database-backed user registration`). Remote synchronization has not been checked.
-- The developer reports removing the personal context document from the public repository and pushing the cleanup, but its absence from tracked files still needs explicit confirmation.
-- Login/JWT, role-based authorization, provider/service management, booking, automated tests, CI, Docker, Redis, RQ, and deployment are not yet implemented.
-
-Do not infer that an automated test suite exists from the manual HTTP checks.
-
-The personal-context cleanup was reported during Day 0; verify its tracked-file status before any future repository-wide publication check.
+- Automated tests use FastAPI `TestClient` and a PostgreSQL database derived by appending `_test` to the configured development database name. The database must exist first; fixtures run Alembic migrations there and truncate only that test database. The test database is `appointments_test`. Never run these fixtures against a database with data you need.
+- Day 1 implementation is committed and pushed: `ae81008` (`feat: add database-backed user registration`) and `08a3e76` (`docs: record Day 1 registration checkpoint`). README and handoff documentation were refreshed for Day 2 on 25 October 2026; check Git status and latest commit before continuing.
+- A tracked-file search found no context-named file in the public repository. Keep any private personal context out of the public repo.
+- Login/JWT, role-based authorization, provider/service management, booking, broader integration/concurrency tests, CI, Docker, Redis, RQ, and deployment are not yet implemented.
 
 ## 4. Frozen design
 
@@ -131,7 +127,7 @@ Act as a **backend engineering tutor and reviewer, not a code vending machine**.
 
 ## 8. Day 1 implementation evidence and next learning step
 
-The Day 1 database and registration slice is implemented and manually verified, but has no automated tests yet. The implementation used these concepts:
+The Day 1 database and registration slice is implemented, manually verified, and covered by nine automated tests. The implementation used these concepts:
 
 - SQLAlchemy's engine manages connections; request-scoped sessions manage each unit of database work.
 - Importing mapped models registers tables in `Base.metadata`, which Alembic compares with PostgreSQL.
@@ -142,7 +138,7 @@ The Day 1 database and registration slice is implemented and manually verified, 
 
 Do not assume Python 3.14.4 is compatible with every dependency. Check actual installation results and relevant package compatibility before proceeding. If a compatibility issue appears, investigate the smallest appropriate fix rather than changing the whole stack by default.
 
-Next, add automated tests for the completed Day 1 behavior and commit the current work. Then begin Day 2 login/JWT and role-based authorization.
+Day 1 is complete. Begin Day 2 with login/JWT and role-based authorization, following the canonical plan; keep M1 marked incomplete until its booking evidence is met.
 
 ## 9. Truthfulness and resume constraints
 

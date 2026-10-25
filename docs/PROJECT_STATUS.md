@@ -1,6 +1,6 @@
 # Appointment Scheduling API — Project Status
 
-**Last updated:** 24 October 2026
+**Last updated:** 25 October 2026
 **Current state:** Day 1 database/model/migration/registration slice verified / pre-M1
 **Canonical specification:** `APPOINTMENT_SCHEDULING_API_PROJECT_PLAN.md`  
 **Continuity context:** `APPOINTMENT_SCHEDULING_API_CONTEXT.md`  
@@ -25,16 +25,16 @@
 - [x] `.gitignore` added; `.venv/` confirmed ignored.
 - [x] Personal context document removed from the public repository and the cleanup pushed, as reported by the developer.
 - [x] At least one concrete job-search action completed alongside project work.
-- [x] Latest commit and clean/synced Git state verified from terminal output on 22 October 2026.
-- [ ] Confirm the private personal-context document is absent from tracked public-repository files (for example, with `git ls-files`).
+- [x] Day 1 implementation commits pushed to `origin/main`.
+- [x] Confirm no context-named private file is tracked in the public repository.
 - [ ] No project milestone has been claimed on the resume.
 
 **Repository URL:** https://github.com/Tapas3341/appointment-scheduling-api  
 **Local repository:** `C:\Users\Tapasendra Patra\appointment-scheduling-api`  
 **Primary branch:** `main`  
 **Known initial commit:** `d7c0ab3 chore: initialize appointment scheduling API`  
-**Latest observed commit:** `04b2051 Update status and handoff docs at end of Day 0` (reported by the developer on 22 October 2026).
-**Git state:** Day 1 implementation committed as `ae81008`; remote synchronization has not been checked.
+**Latest observed pushed checkpoint:** Day 1 implementation and status documentation are on `origin/main`; check Git for the latest commit and current worktree state.
+**Git state:** Day 1 commits are on `origin/main`; verify current status before continuing.
 **Dependency approach:** Python virtual environment (`venv`), `pip`, pinned `requirements.txt`.  
 **Python version observed:** `3.14.4`.  
 **Last manually verified behavior:** PostgreSQL-backed `GET /health` returned `{"status": "ok"}`; registration returned the expected `201`, `409`, and `422` responses; `/docs` returned HTTP 200. Temporary registration test rows were removed.
@@ -59,7 +59,7 @@ At the end of Day 0, the dependency file contained pinned versions for the initi
 
 The `/docs` route is FastAPI-generated Swagger UI. It is not a custom frontend.
 
-The personal-context cleanup was reported during Day 0; verify its tracked-file status before any future repository-wide publication check.
+The tracked-file list was checked on 25 October 2026 and contains no context-named private file.
 
 ## 2. Canonical decisions — do not silently drift
 
@@ -117,7 +117,7 @@ M0 completion does not imply that M1 or any later milestone is complete.
 6. [x] Implement and manually verify registration validation, persistence, hashing, and response safety.
 7. [x] Verify `alembic check`, Python compilation, and the database-backed health endpoint.
 8. [x] Add automated tests against a separate PostgreSQL test database; all 9 pass.
-9. [x] Commit the Day 1 work as `ae81008`.
+9. [x] Commit the Day 1 work as `ae81008`; push it and the status update as `08a3e76`.
 
 ### Day 1 — 24 October 2026
 
@@ -165,7 +165,7 @@ Append one entry after every work session. Keep it short and factual.
 
 **Learned / can now explain:** Basic FastAPI application setup, the health endpoint, generated Swagger UI, local Python environment/dependency setup, Git commits, and keeping personal context out of a public repository.
 
-**Blocked by / next action:** Confirm the private personal-context document is not tracked in the public repository, then begin Day 1 with PostgreSQL, SQLAlchemy, Alembic, and registration.
+**Blocked by / next action:** Begin Day 2 with login/JWT and role-based authorization.
 
 **Resume impact:** No change; M0 foundation only. Do not claim backend database, authentication, automated testing, CI, caching, background jobs, or deployment features yet.
 

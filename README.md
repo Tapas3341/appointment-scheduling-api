@@ -23,34 +23,48 @@ Technologies will be added to the implemented stack only after they have actuall
 
 ## Current Status
 
-**Day 0 — Foundation in progress.**
+**Day 1 database and registration slice complete; Day 2 is next.**
 
-The initial repository and application setup are being established. The API's booking, authentication, and persistence features are planned but are not yet implemented.
+The API currently connects to PostgreSQL, checks database connectivity through `GET /health`, and supports customer/provider registration. Login/JWT, authorization, provider services, and appointment booking remain planned.
 
 ## Implemented
 
-- Initial public GitHub repository.
-- Local development setup and API foundation — in progress; verified capabilities will be recorded as they are completed.
+- Synchronous SQLAlchemy database engine and request-scoped sessions.
+- UUID-backed user model and Alembic migration.
+- `GET /health`, including a PostgreSQL connectivity check.
+- `POST /api/v1/auth/register` with input validation, Argon2 password hashing, duplicate-email conflict handling, and a response that excludes password data.
+- Nine automated registration tests against a separate PostgreSQL test database.
 
 ## Planned
 
-- User registration, login, and role-based access for customers, providers, and administrators.
+- Login, JWT authentication, and role-based authorization for customers, providers, and administrators.
 - Provider profiles, services, and weekly availability rules.
 - Appointment booking with five-minute temporary holds.
 - PostgreSQL constraints to prevent overlapping active appointments.
 - Timezone-aware scheduling and booking lifecycle rules.
-- Automated tests, containerized development, and continuous integration.
+- Broader automated tests, containerized development, and continuous integration.
 - Redis availability caching, background jobs, and idempotent booking requests.
 - Deployment and technical documentation.
 
-## Project Structure
-
-The initial structure will be documented as the application develops.
-
 ## Running Locally
 
-Local setup instructions will be added after the development environment and health endpoint have been verified.
+Configure `DATABASE_URL` in `.env`, activate the project virtual environment, and apply migrations:
+
+```powershell
+python -m alembic upgrade head
+python -m uvicorn app.main:app --reload
+```
 
 ## API Documentation
 
-Once the application is running, FastAPI will provide interactive API documentation through its Swagger UI and OpenAPI endpoints.
+When the application is running, open `http://127.0.0.1:8000/docs` for FastAPI's interactive API documentation.
+
+## Tests
+
+The automated tests use PostgreSQL. Create a separate test database named by appending `_test` to the database name in `DATABASE_URL` (for example, `appointments_test`) before running:
+
+```powershell
+python -m pytest -q
+```
+
+The test fixture applies migrations and clears rows only in that separate test database; do not point it at a database containing data you need.
